@@ -11,6 +11,11 @@ async fn index2() -> impl Responder {
     HttpResponse::Ok().body("Hello World again")
 }
 
+#[get("/api")]
+async fn api_base() -> impl Responder {
+    HttpResponse::Ok().body("Placeholder for API for Government of Canada payscales")
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     let host = env::var("HOST").expect("Host not set");
@@ -19,6 +24,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(index)
             .service(index2)
+            .service(api_base)
     })
     .bind(format!("{}:{}", host, port))?
     .run()
