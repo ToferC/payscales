@@ -1,21 +1,26 @@
 use actix_web::{web, get, App, HttpResponse, HttpServer, Responder};
 use std::env;
 
+extern crate diesel;
+
+use diesel::prelude::*;
+use diesel::r2d2::{self, ConnectionManager};
+
 mod handlers;
+mod models;
+mod errors;
+mod schema;
 
-#[get("/")]
-async fn index() -> impl Responder {
-    HttpResponse::Ok().body("Hello World")
-}
-
-#[get("/again")]
-async fn index2() -> impl Responder {
-    HttpResponse::Ok().body("Hello World again")
-}
+pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+
+    // Set environment variables
+    dotenv::dotenv().ok();
+    std::env::set_var("RUST_LOG", "actix_web=debug");
+
     let environment = env::var("ENVIRONMENT");
 
     let environment = match environment {
@@ -29,10 +34,19 @@ async fn main() -> std::io::Result<()> {
         (String::from("127.0.0.1"), String::from("8088"))
     };
 
-    HttpServer::new(|| {
+    // create database connection pool
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    let pool: Pool = r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.");
+
+
+    HttpServer::new(move || {
         App::new()
-            .service(index)
-            .service(index2)
+            .data(pool.clone())
+            .service(handlers::index)
             .service(handlers::api_base)
             .service(handlers::api_group)
             .service(handlers::api_group_level)

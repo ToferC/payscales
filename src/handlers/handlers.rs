@@ -8,6 +8,11 @@ use chrono::prelude::*;
 /// /api/{group}/{level}/{date} -> pay for group & level at date rates
 /// /api/{group}/{level}/{date}/{period in days or hours -- 5d, 37.5h} -> pay for that period
 
+#[get("/")]
+async fn index() -> impl Responder {
+    HttpResponse::Ok().body("Hello World")
+}
+
 #[get("/api")]
 pub async fn api_base() -> impl Responder {
     HttpResponse::Ok().body("Placeholder for API for Government of Canada payscales")
