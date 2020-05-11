@@ -1,7 +1,15 @@
-use actix_web::{web, get, App, HttpResponse, HttpServer, Responder};
+extern crate diesel;
+extern crate juniper;
+
 use std::env;
 
-extern crate diesel;
+use actix_web::{App, HttpServer, web};
+
+
+mod graphql_schema;
+
+use crate::graphql_schema::{create_schema};
+
 
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
@@ -33,8 +41,10 @@ async fn main() -> std::io::Result<()> {
     } else {
         (String::from("127.0.0.1"), String::from("8088"))
     };
-
+    
+    /*
     // create database connection pool
+    // Diesel Postgres
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let manager = ConnectionManager::<PgConnection>::new(database_url);
@@ -42,14 +52,20 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
+    */
+
+    // Create Juniper Schema
+    let schema = std::sync::Arc::new(create_schema());
 
     HttpServer::new(move || {
         App::new()
-            .data(pool.clone())
+            .data(schema.clone())
             .service(handlers::index)
             .service(handlers::api_base)
             .service(handlers::api_group)
             .service(handlers::api_group_level)
+            .service(handlers::graphql)
+            .service(web::resource("/graphiql").route(web::get().to(handlers::graphiql)))
     })
     .bind(format!("{}:{}", host, port))?
     .run()
