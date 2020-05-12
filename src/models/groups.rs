@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use std::collections::HashMap;
 use juniper::{GraphQLObject, GraphQLInputObject};
 
-#[derive(juniper::GraphQLObject)]
+#[derive(GraphQLObject)]
 #[graphql(description = "A pay group")]
 pub struct Group {
     /// The Group's Name
@@ -29,7 +29,7 @@ impl Group {
     }
 }
 
-#[derive(juniper::GraphQLInputObject)]
+#[derive(GraphQLInputObject)]
 #[graphql(description = "A pay group")]
 pub struct NewGroup {
     pub name: String,
@@ -38,7 +38,7 @@ pub struct NewGroup {
     pub payScales: Vec<String>,
 }
 
-#[derive(juniper::GraphQLObject)]
+#[derive(GraphQLObject)]
 #[graphql(description = "Salary tables for a pay group and level")]
 pub struct PayScale {
     pub name: String,
@@ -47,7 +47,7 @@ pub struct PayScale {
 }
 
 
-#[derive(juniper::GraphQLObject)]
+#[derive(GraphQLObject)]
 #[graphql(description = "Salary row for a date step")]
 pub struct PayRow {
     pub date_time: String,

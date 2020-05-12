@@ -28,7 +28,7 @@ pub async fn graphql(
 }
 
 pub async fn graphiql() -> HttpResponse {
-    let html = graphiql_source("/graphiql");
+    let html = graphiql_source("/graphql");
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(html)

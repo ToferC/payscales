@@ -11,13 +11,13 @@ impl QueryRoot {
             Group {
                 identifier: "ec".to_owned(),
                 name: "Economics and Social".to_owned(),
-                url: "https://tbs-sct.gc.ca".to_owned(),
+                url: "https://tbs-sct.gc.ca/ec".to_owned(),
                 payScales: Vec::new(),
             },
             Group {
                 identifier: "cs".to_owned(),
                 name: "Computer Science".to_owned(),
-                url: "https://tbs-sct.gc.ca".to_owned(),
+                url: "https://tbs-sct.gc.ca/cs".to_owned(),
                 payScales: Vec::new(),
             }
         ]
@@ -26,7 +26,7 @@ impl QueryRoot {
         Ok(Group {
             identifier: "cs".to_owned(),
             name: "Computer Science".to_owned(),
-            url: "https://tbs-sct.gc.ca".to_owned(),
+            url: "https://tbs-sct.gc.ca/cs".to_owned(),
             payScales: Vec::new(),
         })
     }
@@ -49,6 +49,6 @@ impl MutationRoot {
 pub type Schema = RootNode<'static, QueryRoot, MutationRoot>;
 
 pub fn create_schema() -> Schema {
-    Schema::new(QueryRoot {}, MutationRoot {} )
+    Schema::new(QueryRoot, MutationRoot)
 }
 
