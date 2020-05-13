@@ -1,18 +1,16 @@
-
-#[macro_use]
 extern crate juniper;
 
 extern crate diesel;
 
 use std::env;
-use std::io;
 
 use actix_web::{App, HttpServer, web, middleware};
 
 
 mod graphql_schema;
+mod utilities;
 
-use crate::graphql_schema::{create_schema, Schema};
+use crate::graphql_schema::{create_schema};
 
 
 use diesel::prelude::*;

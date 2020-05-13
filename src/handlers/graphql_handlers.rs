@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use actix_web::{web, get, post, HttpResponse, Responder, Error};
+use actix_web::{web, get, post, HttpResponse, Error};
 use juniper::http::graphiql::graphiql_source;
 use juniper::http::GraphQLRequest;
 

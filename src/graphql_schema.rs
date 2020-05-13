@@ -1,6 +1,8 @@
-use juniper::{RootNode, FieldResult};
+use juniper::{RootNode, FieldResult, EmptyMutation};
 
-use crate::models::{Group, NewGroup, PayScale, PayRow};
+use crate::models::{Group};
+
+use crate::utilities::read_file_to_group;
 
 pub struct QueryRoot;
 
@@ -12,43 +14,27 @@ impl QueryRoot {
                 identifier: "ec".to_owned(),
                 name: "Economics and Social".to_owned(),
                 url: "https://tbs-sct.gc.ca/ec".to_owned(),
-                payScales: Vec::new(),
+                pay_scales: Vec::new(),
             },
             Group {
                 identifier: "cs".to_owned(),
                 name: "Computer Science".to_owned(),
                 url: "https://tbs-sct.gc.ca/cs".to_owned(),
-                payScales: Vec::new(),
+                pay_scales: Vec::new(),
             }
         ]
     }
     fn group(identifier: String) -> FieldResult<Group> {
-        Ok(Group {
-            identifier: "cs".to_owned(),
-            name: "Computer Science".to_owned(),
-            url: "https://tbs-sct.gc.ca/cs".to_owned(),
-            payScales: Vec::new(),
-        })
+
+        let g = read_file_to_group(format!("./data/{}.json", identifier).as_str()).unwrap();
+        
+        Ok(g)
     }
 }
 
-pub struct MutationRoot;
-
-#[juniper::object]
-impl MutationRoot {
-    fn createGroup(new_group: NewGroup) -> FieldResult<Group> {
-        Ok(Group {
-            identifier: String::from("fb"),
-            name: String::from("Border Services"),
-            url: String::from("https://tbs-sct.gc.ca/fb"),
-            payScales: Vec::new(),
-        })
-    }
-}
-
-pub type Schema = RootNode<'static, QueryRoot, MutationRoot>;
+pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<()>>;
 
 pub fn create_schema() -> Schema {
-    Schema::new(QueryRoot, MutationRoot)
+    Schema::new(QueryRoot, EmptyMutation::new())
 }
 
