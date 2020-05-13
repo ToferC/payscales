@@ -22,7 +22,6 @@ mod errors;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
 
@@ -54,7 +53,7 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
-    */ 
+    */
 
     // Create Juniper Schema
     let schema = std::sync::Arc::new(create_schema());

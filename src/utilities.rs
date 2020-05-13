@@ -8,11 +8,26 @@ use serde_json::{Value, from_reader};
 
 use crate::models::Group;
 
-pub fn read_file_to_group(filepath: &str) -> Result<Group, Box<Error>> {
+pub fn read_file_to_group(filepath: &str) -> Result<Group, Box<dyn Error>> {
     let file = File::open(filepath).expect("could not open file");
-    let mut reader = BufReader::new(file);
+    let reader = BufReader::new(file);
     
     let g = serde_json::from_reader(reader)?;
 
     Ok(g)
+}
+
+pub fn load_json_files() -> Result<Vec<Group>, Box<dyn Error>> {
+    let mut groups: Vec<Group> = Vec::new();
+
+    let paths = fs::read_dir("./data").unwrap();
+    
+    for path in paths {
+        let file_name = path.unwrap().file_name();
+        let file_string = file_name.to_str().unwrap();
+        let g = read_file_to_group(file_string).expect("Could not open group");
+        groups.push(g)
+    }
+
+    Ok(groups)
 }
