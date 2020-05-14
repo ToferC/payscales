@@ -13,6 +13,8 @@ pub struct Group {
     pub url: String,
     /// Vector of payscales for the group
     pub pay_scales: Vec<PayScale>,
+    // Date scraped
+    pub date_scraped: String,
 }
 
 impl Group {
@@ -31,6 +33,10 @@ impl Group {
     pub fn payScales(&self) -> &Vec<PayScale> {
         &self.pay_scales
     }
+
+    pub fn date_scraped(&self) -> &str {
+        &self.date_scraped.as_str()
+    }
 }
 
 #[derive(GraphQLObject, Deserialize)]
@@ -39,7 +45,8 @@ impl Group {
 pub struct PayScale {
     pub name: String,
     pub steps: i32,
-    pub pay_rows: Vec<PayRow>,
+    pub current_pay: Vec<i32>,
+    pub increments: Vec<Increment>,
 }
 
 impl PayScale {
@@ -51,12 +58,16 @@ impl PayScale {
         self.steps
     }
 
-    pub fn pay_rows(&self) -> &Vec<PayRow> {
-        &self.pay_rows
+    pub fn current_pay(&self) -> Box<&Vec<i32>> {
+        Box::new(&self.current_pay)
     }
 
-    pub fn pay_row_for_date(&self, date: String) -> Option<&PayRow> {
-        self.pay_rows.iter().find(|p| p.date_time == date)
+    pub fn pay_rows(&self) -> &Vec<Increment> {
+        &self.increments
+    }
+
+    pub fn pay_row_for_date(&self, date: String) -> Option<&Increment> {
+        self.increments.iter().find(|p| p.date_time == date)
     }
 }
 
@@ -64,12 +75,12 @@ impl PayScale {
 #[derive(GraphQLObject, Deserialize)]
 #[serde(rename_all= "snake_case")]
 #[graphql(description = "Salary row for a date step")]
-pub struct PayRow {
+pub struct Increment {
     pub date_time: String,
     pub salary: Vec<i32>,
 }
 
-impl PayRow {
+impl Increment {
     pub fn date_time(&self) -> &str {
         self.date_time.as_str()
     }

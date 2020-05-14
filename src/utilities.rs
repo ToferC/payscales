@@ -17,7 +17,7 @@ pub fn read_file_to_group(filepath: &str) -> Result<Group, Box<dyn Error>> {
     Ok(g)
 }
 
-pub fn load_json_files() -> Result<Vec<Group>, Box<dyn Error>> {
+pub fn load_json_files() -> Result<Box<Vec<Group>>, Box<dyn Error>> {
     let mut groups: Vec<Group> = Vec::new();
 
     let paths = fs::read_dir("./data").unwrap();
@@ -25,9 +25,10 @@ pub fn load_json_files() -> Result<Vec<Group>, Box<dyn Error>> {
     for path in paths {
         let file_name = path.unwrap().file_name();
         let file_string = file_name.to_str().unwrap();
-        let g = read_file_to_group(file_string).expect("Could not open group");
+        println!("{:?}", file_string);
+        let g = read_file_to_group(format!("./data/{}",file_string).as_str())?;
         groups.push(g)
     }
 
-    Ok(groups)
+    Ok(Box::new(groups))
 }

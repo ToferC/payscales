@@ -1,4 +1,4 @@
 mod groups;
 //mod users;
 
-pub use self::groups::{Group, PayScale, PayRow};
+pub use self::groups::{Group, PayScale, Increment};

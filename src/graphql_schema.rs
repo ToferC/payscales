@@ -15,15 +15,18 @@ impl QueryRoot {
                 name: "Economics and Social".to_owned(),
                 url: "https://tbs-sct.gc.ca/ec".to_owned(),
                 pay_scales: Vec::new(),
+                date_scraped: "2020-05-01".to_owned()
             },
             Group {
                 identifier: "cs".to_owned(),
                 name: "Computer Science".to_owned(),
                 url: "https://tbs-sct.gc.ca/cs".to_owned(),
                 pay_scales: Vec::new(),
+                date_scraped: "2020-05-01".to_owned()
             }
         ]
     }
+    
     fn group(identifier: String) -> FieldResult<Group> {
 
         let g = read_file_to_group(format!("./data/{}.json", identifier).as_str()).unwrap();
