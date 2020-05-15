@@ -72,6 +72,11 @@ impl PayScale {
     pub fn increment_for_date(&self, date: String) -> Option<&Increment> {
         self.increments.iter().find(|p| p.date_time == date)
     }
+
+    pub fn scale_for_level(&self, level: i32) -> i32 {
+        // Not implemented
+        42
+    }
 }
 
 
