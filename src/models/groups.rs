@@ -1,9 +1,9 @@
-use juniper::{GraphQLObject};
 use serde::{Deserialize};
+use std::collections::HashMap;
+use crate::DataBase;
 
-#[derive(GraphQLObject, Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all= "snake_case")]
-#[graphql(description = "A pay group")]
 pub struct Group {
     /// The Group's Name
     pub name: String,
@@ -15,8 +15,11 @@ pub struct Group {
     pub pay_scales: Vec<PayScale>,
     // Date scraped
     pub date_scraped: String,
+    // Irregular format
+    pub irregular_format: bool,
 }
 
+#[juniper::object(Context = DataBase)]
 impl Group {
     pub fn name(&self) -> &str {
         self.name.as_str()
@@ -39,9 +42,8 @@ impl Group {
     }
 }
 
-#[derive(GraphQLObject, Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all= "snake_case")]
-#[graphql(description = "Salary tables for a pay group and level")]
 pub struct PayScale {
     pub name: String,
     pub steps: i32,
@@ -49,6 +51,7 @@ pub struct PayScale {
     pub increments: Vec<Increment>,
 }
 
+#[juniper::object(Context = DataBase)]
 impl PayScale {
     pub fn name(&self) -> &str {
         self.name.as_str()
@@ -62,31 +65,31 @@ impl PayScale {
         Box::new(&self.current_pay)
     }
 
-    pub fn pay_rows(&self) -> &Vec<Increment> {
+    pub fn increments(&self) -> &Vec<Increment> {
         &self.increments
     }
 
-    pub fn pay_row_for_date(&self, date: String) -> Option<&Increment> {
+    pub fn increment_for_date(&self, date: String) -> Option<&Increment> {
         self.increments.iter().find(|p| p.date_time == date)
     }
 }
 
 
-#[derive(GraphQLObject, Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all= "snake_case")]
-#[graphql(description = "Salary row for a date step")]
 pub struct Increment {
     pub date_time: String,
     pub salary: Vec<i32>,
 }
 
+#[juniper::object(Context = DataBase)]
 impl Increment {
     pub fn date_time(&self) -> &str {
         self.date_time.as_str()
     }
 
-    pub fn salary(&self, step: usize) -> i32 {
-        self.salary[step+1]
+    pub fn salary(&self, step: i32) -> i32 {
+        self.salary[step as usize +1]
     }
 }
 

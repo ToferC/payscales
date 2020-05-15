@@ -2,11 +2,12 @@
 
 use std::sync::Arc;
 
-use actix_web::{web, get, post, HttpResponse, Error};
+use actix_web::{web, post, HttpResponse, Error};
 use juniper::http::graphiql::graphiql_source;
 use juniper::http::GraphQLRequest;
 
 use crate::graphql_schema::{Schema};
+use crate::DataBase;
 
 // Graphql
 
@@ -15,8 +16,11 @@ pub async fn graphql(
     st: web::Data<Arc<Schema>>,
     data: web::Json<GraphQLRequest>,
 ) -> Result<HttpResponse, Error> {
-    let group = web::block(move || {
-        let res = data.execute(&st, &());
+
+    let ctx = DataBase::new();
+
+    let groups = web::block(move || {
+        let res = data.execute(&st, &ctx);
         Ok::<_, serde_json::error::Error>(serde_json::to_string(&res)?)
     })
     .await?;
@@ -24,7 +28,7 @@ pub async fn graphql(
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
-        .body(group))
+        .body(groups))
 }
 
 pub async fn graphiql() -> HttpResponse {

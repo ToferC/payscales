@@ -2,40 +2,32 @@ use juniper::{RootNode, FieldResult, EmptyMutation};
 
 use crate::models::{Group};
 
-use crate::utilities::read_file_to_group;
+use crate::DataBase;
 
 pub struct QueryRoot;
 
-#[juniper::object]
+#[juniper::object(Context = DataBase)]
 impl QueryRoot {
-    fn groups() -> Vec<Group> {
-        vec![
-            Group {
-                identifier: "ec".to_owned(),
-                name: "Economics and Social".to_owned(),
-                url: "https://tbs-sct.gc.ca/ec".to_owned(),
-                pay_scales: Vec::new(),
-                date_scraped: "2020-05-01".to_owned()
-            },
-            Group {
-                identifier: "cs".to_owned(),
-                name: "Computer Science".to_owned(),
-                url: "https://tbs-sct.gc.ca/cs".to_owned(),
-                pay_scales: Vec::new(),
-                date_scraped: "2020-05-01".to_owned()
-            }
-        ]
+    pub fn groups(
+        context: &DataBase
+    ) -> Vec<Group> {
+        
+        let groups = &context.groups.clone();
+
+        groups.to_vec()
     }
     
-    fn group(identifier: String) -> FieldResult<Group> {
+    fn group(
+        context: &DataBase,
+        identifier: String) -> FieldResult<&Group> {
 
-        let g = read_file_to_group(format!("./data/{}.json", identifier).as_str()).unwrap();
+        let g = &context.groups.iter().find(|g| g.identifier == identifier).unwrap();
         
         Ok(g)
     }
 }
 
-pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<()>>;
+pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<DataBase>>;
 
 pub fn create_schema() -> Schema {
     Schema::new(QueryRoot, EmptyMutation::new())

@@ -2,11 +2,9 @@ use std::fs;
 use std::fs::File;
 use std::error::Error;
 use std::io::{BufReader};
-use std::io::prelude::*;
-use std::path::Path;
-use serde_json::{Value, from_reader};
+use std::collections::HashMap;
 
-use crate::models::Group;
+use crate::models::{Group};
 
 pub fn read_file_to_group(filepath: &str) -> Result<Group, Box<dyn Error>> {
     let file = File::open(filepath).expect("could not open file");
@@ -17,18 +15,11 @@ pub fn read_file_to_group(filepath: &str) -> Result<Group, Box<dyn Error>> {
     Ok(g)
 }
 
-pub fn load_json_files() -> Result<Box<Vec<Group>>, Box<dyn Error>> {
-    let mut groups: Vec<Group> = Vec::new();
-
-    let paths = fs::read_dir("./data").unwrap();
+pub fn load_group_data() -> Result<Vec<Group>, Box<dyn Error>> {
+    let file = File::open("./data/groups_data.json").expect("could not open file");
+    let reader = BufReader::new(file);
     
-    for path in paths {
-        let file_name = path.unwrap().file_name();
-        let file_string = file_name.to_str().unwrap();
-        println!("{:?}", file_string);
-        let g = read_file_to_group(format!("./data/{}",file_string).as_str())?;
-        groups.push(g)
-    }
+    let group_data: Vec<Group> = serde_json::from_reader(reader).unwrap();
 
-    Ok(Box::new(groups))
+    Ok(group_data)
 }

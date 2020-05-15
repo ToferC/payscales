@@ -3,6 +3,7 @@ extern crate juniper;
 extern crate diesel;
 
 use std::env;
+use std::collections::HashMap;
 
 use actix_web::{App, HttpServer, web, middleware};
 
@@ -11,6 +12,7 @@ mod graphql_schema;
 mod utilities;
 
 use crate::graphql_schema::{create_schema};
+use utilities::load_group_data;
 
 
 use diesel::prelude::*;
@@ -21,6 +23,28 @@ mod models;
 mod errors;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+
+#[derive(Clone)]
+pub struct DataBase {
+    pub groups: Vec<models::Group>,
+}
+
+impl juniper::Context for DataBase {}
+
+impl DataBase {
+    pub fn new() -> Self {
+
+        let groups = load_group_data().unwrap();
+
+        for group in &groups {
+            println!("{:?}", group)
+        }
+
+        DataBase {
+            groups: groups.clone(),
+        }
+    }
+}
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -55,12 +79,19 @@ async fn main() -> std::io::Result<()> {
 
     */
 
+    // create context object
+
+    let mut groups: HashMap<String, models::Group> = HashMap::new();
+
+    let ctx = DataBase::new();
+
     // Create Juniper Schema
     let schema = std::sync::Arc::new(create_schema());
 
     HttpServer::new(move || {
         App::new()
             .data(schema.clone())
+            .data(ctx.clone())
             .wrap(middleware::Logger::default())
             .service(handlers::index)
             .service(handlers::api_base)
