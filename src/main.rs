@@ -36,10 +36,6 @@ impl DataBase {
 
         let groups = load_group_data().unwrap();
 
-        for group in &groups {
-            println!("{:?}", group)
-        }
-
         DataBase {
             groups: groups.clone(),
         }
@@ -80,8 +76,6 @@ async fn main() -> std::io::Result<()> {
     */
 
     // create context object
-
-    let mut groups: HashMap<String, models::Group> = HashMap::new();
 
     let ctx = DataBase::new();
 
