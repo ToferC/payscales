@@ -11,7 +11,6 @@ pub struct PayScale {
     pub name: String,
     pub level: i32,
     pub steps: i32,
-    pub current_pay: Vec<i32>,
     pub increments: Vec<Increment>,
 }
 
@@ -29,7 +28,6 @@ impl PayScale {
         self.steps
     }
 
-    
     pub fn increments(&self) -> &Vec<Increment> {
         &self.increments
     }
