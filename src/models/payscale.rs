@@ -43,7 +43,7 @@ impl PayScale {
             today.month(), 
             today.day());
 
-        let target = 0;
+        let mut target = 0;
         let end_index = self.increments.len() - 1;
         
         for (i, increment) in self.increments.iter().enumerate() {
@@ -63,14 +63,14 @@ impl PayScale {
 
                 if today > start_date && today <= end_date {
                     // set target to current index
-                    let target = i;
+                    target = i;
                     break
                 }
             
             } else {
                 // Current date isn't within an in force increment
                 // So we should use the last increment available
-                let target = end_index;
+                target = end_index;
             }
             
         }
@@ -87,7 +87,7 @@ impl PayScale {
             date.as_str(),
             "%Y-%m-%d").unwrap();
 
-        let target = 0;
+        let mut target = 0;
         let end_index = self.increments.len() - 1;
         
         for (i, increment) in self.increments.iter().enumerate() {
@@ -107,16 +107,15 @@ impl PayScale {
 
                 if target_date > start_date && target_date <= end_date {
                     // set target to current index
-                    let target = i;
+                    target = i;
                     break
                 }
             
             } else {
                 // Current date isn't within an in force increment
                 // So we should use the last increment available
-                let target = end_index;
+                target = end_index;
             }
-            
         }
         
         // return increment for this date
