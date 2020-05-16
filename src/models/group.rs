@@ -35,7 +35,7 @@ impl Group {
         self.url.as_str()
     }
 
-    pub fn payScales(&self) -> &Vec<PayScale> {
+    pub fn payscales(&self) -> &Vec<PayScale> {
         &self.pay_scales
     }
 
@@ -43,7 +43,7 @@ impl Group {
         &self.date_scraped.as_str()
     }
 
-    pub fn scale_for_level(&self, level: i32) -> Option<&PayScale> {
+    pub fn payscale_for_level(&self, level: i32) -> Option<&PayScale> {
         self.pay_scales.iter().find(|p| p.level == level)
     }
 }
