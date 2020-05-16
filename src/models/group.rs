@@ -2,14 +2,14 @@ use serde::{Deserialize};
 use crate::DataBase;
 
 use super::payscale::PayScale;
-use super::increment::Increment;
+use super::enums::GroupID;
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all= "snake_case")]
 pub struct Group {
     pub name: String,
     /// The two-letter identifier for the group
-    pub identifier: String,
+    pub identifier: GroupID,
     /// The URL for the collective agreement
     pub url: String,
     /// Vector of payscales for the group
@@ -28,8 +28,8 @@ impl Group {
         self.name.as_str()
     }
     /// The two-letter identifier for the group
-    pub fn identifier(&self) -> &str {
-        self.identifier.as_str()
+    pub fn identifier(&self) -> &GroupID {
+        &self.identifier
     }
     /// The URL for the collective agreement
     pub fn url(&self) -> &str {

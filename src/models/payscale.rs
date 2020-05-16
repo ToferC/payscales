@@ -1,4 +1,6 @@
 use serde::{Deserialize};
+use chrono::prelude::*;
+
 use crate::DataBase;
 
 use super::increment::Increment;
@@ -27,15 +29,97 @@ impl PayScale {
         self.steps
     }
 
-    pub fn current_pay(&self) -> Box<&Vec<i32>> {
-        Box::new(&self.current_pay)
-    }
-
+    
     pub fn increments(&self) -> &Vec<Increment> {
         &self.increments
     }
+    
+    pub fn current_pay(&self) -> &Increment {
 
-    pub fn increments_for_date(&self, date: String) -> Option<&Increment> {
-        self.increments.iter().find(|i| i.date_time == date)
+        // get current date and structure for PartialOrd
+        let today: DateTime<Local> = Local::now();
+        let today: NaiveDate = NaiveDate::from_ymd(
+            today.year(), 
+            today.month(), 
+            today.day());
+
+        let target = 0;
+        let end_index = self.increments.len() - 1;
+        
+        for (i, increment) in self.increments.iter().enumerate() {
+
+            if i < end_index {
+                // set start_date for increment 
+                let start_date = NaiveDate::parse_from_str(
+                    &self.increments[i].date_time,
+                    "%Y-%m-%d").unwrap();
+    
+                // get the end date for increment
+                let end_date = NaiveDate::parse_from_str(
+                    &self.increments[i+1].date_time.as_str(),
+                    "%Y-%m-%d").unwrap();
+
+                // Check to see if today's date is withing the increment start and end dates
+
+                if today > start_date && today <= end_date {
+                    // set target to current index
+                    let target = i;
+                    break
+                }
+            
+            } else {
+                // Current date isn't within an in force increment
+                // So we should use the last increment available
+                let target = end_index;
+            }
+            
+        }
+        
+        // return increment for this date
+        &self.increments[target]
+    }
+
+    // Accepts a YY-MM-DD string and returns the pay increment in effect for that date
+    pub fn increments_for_date(&self, date: String) -> &Increment {
+
+        // get current date and structure for PartialOrd
+        let target_date: NaiveDate = NaiveDate::parse_from_str(
+            date.as_str(),
+            "%Y-%m-%d").unwrap();
+
+        let target = 0;
+        let end_index = self.increments.len() - 1;
+        
+        for (i, increment) in self.increments.iter().enumerate() {
+
+            if i < end_index {
+                // set start_date for increment 
+                let start_date = NaiveDate::parse_from_str(
+                    &self.increments[i].date_time,
+                    "%Y-%m-%d").unwrap();
+    
+                // get the end date for increment
+                let end_date = NaiveDate::parse_from_str(
+                    &self.increments[i+1].date_time.as_str(),
+                    "%Y-%m-%d").unwrap();
+
+                // Check to see if today's date is withing the increment start and end dates
+
+                if target_date > start_date && target_date <= end_date {
+                    // set target to current index
+                    let target = i;
+                    break
+                }
+            
+            } else {
+                // Current date isn't within an in force increment
+                // So we should use the last increment available
+                let target = end_index;
+            }
+            
+        }
+        
+        // return increment for this date
+        &self.increments[target]
     }
 }

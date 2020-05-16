@@ -1,6 +1,6 @@
 use juniper::{RootNode, FieldResult, EmptyMutation};
 
-use crate::models::{Group};
+use crate::models::{Group, GroupID};
 
 use crate::DataBase;
 
@@ -19,7 +19,7 @@ impl QueryRoot {
     
     fn group(
         context: &DataBase,
-        identifier: String) -> FieldResult<&Group> {
+        identifier: GroupID) -> FieldResult<&Group> {
 
         let g = &context.groups.iter().find(|g| g.identifier == identifier).unwrap();
         
