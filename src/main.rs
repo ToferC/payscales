@@ -3,7 +3,6 @@ extern crate juniper;
 extern crate diesel;
 
 use std::env;
-use std::collections::HashMap;
 
 use actix_web::{App, HttpServer, web, middleware};
 

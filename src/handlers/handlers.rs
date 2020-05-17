@@ -1,5 +1,4 @@
 use actix_web::{web, get, HttpResponse, Responder};
-use chrono::prelude::*;
 
 /// API outline
 /// /api -> list of groups
@@ -38,7 +37,7 @@ pub async fn api_group_level_step(info: web::Path<(String, usize, usize)>) -> im
 }
 
 #[get("/api/{group}/{level}/{date}")]
-pub async fn api_group_level_date(info: web::Path<(String, usize, String)>) -> impl Responder {
+pub async fn api_group_level_date(_info: web::Path<(String, usize, String)>) -> impl Responder {
     HttpResponse::Ok().body(format!("Return pay for group and level at today's date"))
 }
 
