@@ -1,5 +1,8 @@
 use serde::{Deserialize};
+use chrono::prelude::*;
+
 use crate::DataBase;
+use crate::utilities::convert_string_to_naive_date;
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all= "snake_case")]
@@ -13,8 +16,8 @@ pub struct RateOfPay {
 /// Includes a date_time for when the rate of pay comes into force and an array of salary steps.
 impl RateOfPay {
     /// The date_time at which a rate of pay comes into force.
-    pub fn date_time(&self) -> &str {
-        self.date_time.as_str()
+    pub fn in_force(&self) -> NaiveDate {
+        convert_string_to_naive_date(&self.date_time)
     }
 
     /// The range of salary steps within a rate of pay. An array of integers.

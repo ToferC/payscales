@@ -2,6 +2,7 @@ use serde::{Deserialize};
 use chrono::prelude::*;
 
 use crate::DataBase;
+use crate::utilities::check_active_pay_rate;
 
 use super::rate_of_pay::RateOfPay;
 
@@ -51,82 +52,22 @@ impl PayScale {
             today.month(), 
             today.day());
 
-        let mut target = 0;
-        let end_index = self.rates_of_pay.len() - 1;
-        
-        for (i,rate_of_pay) in self.rates_of_pay.iter().enumerate() {
+        let target_rate = check_active_pay_rate(&self.rates_of_pay, today);
 
-            if i < end_index {
-                // set start_date forrate_of_pay 
-                let start_date = NaiveDate::parse_from_str(
-                    &self.rates_of_pay[i].date_time,
-                    "%Y-%m-%d").unwrap();
-    
-                // get the end date forrate_of_pay
-                let end_date = NaiveDate::parse_from_str(
-                    &self.rates_of_pay[i+1].date_time.as_str(),
-                    "%Y-%m-%d").unwrap();
+        &target_rate
 
-                // Check to see if today's date is withing therate_of_pay start and end dates
-
-                if today > start_date && today <= end_date {
-                    // set target to current index
-                    target = i;
-                    break
-                }
-            
-            } else {
-                // Current date isn't within an in forcerate_of_pay
-                // So we should use the lastrate_of_pay available
-                target = end_index;
-            }
-            
-        }
-        
-        // returnrate_of_pay for this date
-        &self.rates_of_pay[target]
     }
-
+    
     // Accepts a YY-MM-DD string and returns the payrate_of_pay in effect for the date provided, past, present or future.
     pub fn rate_of_pays_for_date(&self, date: String) -> &RateOfPay {
 
-        // get current date and structure for PartialOrd
+        // get target date and structure for PartialOrd
         let target_date: NaiveDate = NaiveDate::parse_from_str(
             date.as_str(),
             "%Y-%m-%d").unwrap();
-
-        let mut target = 0;
-        let end_index = self.rates_of_pay.len() - 1;
         
-        for (i,rate_of_pay) in self.rates_of_pay.iter().enumerate() {
-
-            if i < end_index {
-                // set start_date forrate_of_pay 
-                let start_date = NaiveDate::parse_from_str(
-                    &self.rates_of_pay[i].date_time,
-                    "%Y-%m-%d").unwrap();
-    
-                // get the end date forrate_of_pay
-                let end_date = NaiveDate::parse_from_str(
-                    &self.rates_of_pay[i+1].date_time.as_str(),
-                    "%Y-%m-%d").unwrap();
-
-                // Check to see if today's date is withing therate_of_pay start and end dates
-
-                if target_date > start_date && target_date <= end_date {
-                    // set target to current index
-                    target = i;
-                    break
-                }
-            
-            } else {
-                // Current date isn't within an in forcerate_of_pay
-                // So we should use the lastrate_of_pay available
-                target = end_index;
-            }
-        }
+        let target_rate = check_active_pay_rate(&self.rates_of_pay, target_date);
         
-        // returnrate_of_pay for this date
-        &self.rates_of_pay[target]
+        &target_rate
     }
 }
