@@ -4,7 +4,8 @@ use std::sync::Arc;
 
 use actix_web::{web, post, HttpResponse, Error};
 use juniper::http::graphiql::graphiql_source;
-use juniper::http::GraphQLRequest;
+use juniper::http::{GraphQLRequest};
+use juniper::http::playground::playground_source;
 
 use crate::graphql_schema::{Schema};
 use crate::DataBase;
@@ -37,4 +38,11 @@ pub async fn graphiql() -> HttpResponse {
         .content_type("text/html; charset=utf-8")
         .body(html)
 
+}
+
+pub async fn playground_handler() -> HttpResponse {
+    let html = playground_source("/graphql");
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(html)
 }

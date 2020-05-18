@@ -91,6 +91,7 @@ async fn main() -> std::io::Result<()> {
             .service(handlers::api_group)
             .service(handlers::api_group_level)
             .service(handlers::graphql)
+            .service(web::resource("/playground").route(web::get().to(handlers::playground_handler)))
             .service(web::resource("/graphiql").route(web::get().to(handlers::graphiql)))
     })
     .bind(format!("{}:{}", host, port))?
