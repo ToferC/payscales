@@ -9,16 +9,15 @@ A sample query looks like this:
 
 ```graphql
 {
-  group(identifier: "cs") {
-    name
-    identifier
-    url
-    payScales {
-      payRows {
-        dateTime
-        salary
+  group(identifier: FS) {
+    payscales {
+      steps
+      level
+      currentRatesOfPay{
+        salary(step: 1)
       }
     }
+    payForLevelAndStepToday(level: 2, step: 1)
   }
 }
 ```

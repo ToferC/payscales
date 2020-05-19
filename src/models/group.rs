@@ -76,6 +76,8 @@ impl Group {
     pub fn pay_for_level_and_step_on_date(&self, level: i32, step: i32, date: String) -> i32 {
         
         let payscale = self.pay_scales.iter().find(|p| p.level == level).unwrap();
+
+        // Error here if level not applied for all groups
         
         // get target date and structure for PartialOrd
         let target_date: NaiveDate = NaiveDate::parse_from_str(
