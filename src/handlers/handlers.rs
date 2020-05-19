@@ -28,7 +28,7 @@ async fn index() -> impl Responder {
             currentRatesOfPay{
               salary(step: 3)
             }
-            rateOfPaysForDate(date: "2020-06-23"){
+            payOnDateForLevelAndStep(date: "2020-06-23"){
               inForce
               salary(step: 3)
             }

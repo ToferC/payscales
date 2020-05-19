@@ -53,7 +53,7 @@ impl Group {
     /// Directly returns the today's in force salary for a level and step within the group
     /// without needing to access pay scales and rates of pay.
     /// Accepts level and step as integers as arguments.
-    pub fn pay_for_level_and_step_today(&self, level: i32, step: i32) -> Option<&i32> {
+    pub fn pay_in_force_for_level_and_step(&self, level: i32, step: i32) -> Option<&i32> {
         
         let payscale = self.pay_scales.iter().find(|p| p.level == level);
 
@@ -78,7 +78,7 @@ impl Group {
     /// Directly returns the pay at a specified date for a level and step within the group
     /// without needing to access pay scales and rates of pay.
     /// Accepts level and step as integers and date in a YY-MM-DD string as arguments.
-    pub fn pay_for_level_and_step_on_date(&self, level: i32, step: i32, date: String) -> Option<&i32> {
+    pub fn pay_on_date_for_level_and_step(&self, level: i32, step: i32, date: String) -> Option<&i32> {
         
         let payscale = self.pay_scales.iter().find(|p| p.level == level);
 
