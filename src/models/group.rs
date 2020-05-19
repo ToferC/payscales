@@ -53,9 +53,14 @@ impl Group {
     /// Directly returns the today's in force salary for a level and step within the group
     /// without needing to access pay scales and rates of pay.
     /// Accepts level and step as integers as arguments.
-    pub fn pay_for_level_and_step_today(&self, level: i32, step: i32) -> i32 {
+    pub fn pay_for_level_and_step_today(&self, level: i32, step: i32) -> Option<&i32> {
         
-        let payscale = self.pay_scales.iter().find(|p| p.level == level).unwrap();
+        let payscale = self.pay_scales.iter().find(|p| p.level == level);
+
+        let payscale = match payscale {
+            Some(p) => p,
+            None => return None
+        };
         
         // get current date and structure for PartialOrd
         let today: DateTime<Local> = Local::now();
@@ -66,16 +71,21 @@ impl Group {
 
         let target_rate = check_active_pay_rate(&payscale.rates_of_pay, today);
 
-        let current_salary = target_rate.salary[step as usize -1];
+        let current_salary = target_rate.salary.get(step as usize -1);
         
         current_salary
     }
     /// Directly returns the pay at a specified date for a level and step within the group
     /// without needing to access pay scales and rates of pay.
     /// Accepts level and step as integers and date in a YY-MM-DD string as arguments.
-    pub fn pay_for_level_and_step_on_date(&self, level: i32, step: i32, date: String) -> i32 {
+    pub fn pay_for_level_and_step_on_date(&self, level: i32, step: i32, date: String) -> Option<&i32> {
         
-        let payscale = self.pay_scales.iter().find(|p| p.level == level).unwrap();
+        let payscale = self.pay_scales.iter().find(|p| p.level == level);
+
+        let payscale = match payscale {
+            Some(p) => p,
+            None => return None
+        };
 
         // Error here if level not applied for all groups
         
@@ -86,7 +96,7 @@ impl Group {
 
         let target_rate = check_active_pay_rate(&payscale.rates_of_pay, target_date);
 
-        let target_salary = target_rate.salary[step as usize -1];
+        let target_salary = target_rate.salary.get(step as usize -1);
         
         target_salary
     }
