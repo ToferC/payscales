@@ -21,7 +21,7 @@ impl RateOfPay {
     }
 
     /// The range of salary steps within a rate of pay. An array of integers.
-    pub fn salary(&self, step: i32) -> i32 {
-        self.salary[step as usize -1]
+    pub fn salary(&self, step: i32) -> Option<&i32> {
+        self.salary.get(step as usize -1)
     }
 }
