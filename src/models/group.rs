@@ -8,7 +8,7 @@ use crate::utilities::{
     round_to_2_decimal_points
 };
 
-use super::payscale::PayScale;
+use crate::models::{PayScale, RateOfPay};
 use super::pay_period::PayPeriod;
 use super::enums::GroupID;
 
@@ -65,10 +65,16 @@ impl Group {
         };
 
         // Check for crossing Rates of pay based on dates and add each date to vec
-        let mut relevant_rates_of_pay: Vec<NaiveDate> = Vec::new();
+        let mut relevant_rates_of_pay: Vec<&RateOfPay> = Vec::new();
 
+        // Find starting rate of pay
+        let mut start_pay_rate = check_active_pay_rate(&payscale.rates_of_pay, start_date).clone();
+        
+        // Alter date_time to starting date
+        start_pay_rate.date_time = start_date.format("%Y-%m-%d").to_string();
+        
         // Add our start_date to vec
-        relevant_rates_of_pay.push(start_date);
+        relevant_rates_of_pay.push(&start_pay_rate);
 
         for rp in &payscale.rates_of_pay {
             // get all payscale rates of pay in_force dates
@@ -76,12 +82,18 @@ impl Group {
             
             // check if rate of pay active between dates and if so, add to our vec
             if target_date > start_date && target_date <= end_date {
-                relevant_rates_of_pay.push(target_date);
+                relevant_rates_of_pay.push(rp);
             }
         };
 
+        // Find ending rate of pay
+        let mut end_pay_rate = check_active_pay_rate(&payscale.rates_of_pay, end_date).clone();
+    
+        // Alter date_time to end date
+        end_pay_rate.date_time = end_date.format("%Y-%m-%d").to_string();
+        
         // Add our end_date to vec
-        relevant_rates_of_pay.push(end_date);
+        relevant_rates_of_pay.push(&end_pay_rate);
 
         // Create vec of PayPeriods
         let mut pay_periods: Vec<PayPeriod> = Vec::new();
@@ -94,22 +106,24 @@ impl Group {
             // find the duration in hours within each rate_of_pay using max_len
             if i < (max_len - 1) {
                 // Start at our start date
-                let period_start = relevant_rates_of_pay[i]; 
+                let period_start = convert_string_to_naive_date(
+                    &relevant_rates_of_pay[i].date_time); 
     
                 // identify the end date
-                let period_end = relevant_rates_of_pay[i + 1];
+                let period_end = convert_string_to_naive_date(
+                    &relevant_rates_of_pay[i + 1].date_time);
 
                 // find duration in hours
                 let duration = period_end.signed_duration_since(period_start);
 
                 // take raw calendar days and get working hours (approximation)
                 // days / 7.0 (weeks) * 5/0 (working days) * 7.5 (hours per workday)
-                let hours = duration.num_days() as f64 / 7.0 * 5.0 * 7.5;
+                let days = (duration.num_days() as f64 / 7.0 * 5.0).round();
 
-                // determine rate of pay for period
-                let target_rate = check_active_pay_rate(&payscale.rates_of_pay, *rp);
-    
-                let target_salary = target_rate.salary.get(step as usize -1);
+                let hours = days * 7.5;
+
+                // determine rate of pay for period    
+                let target_salary = rp.salary.get(step as usize -1);
 
                 let target_salary = match target_salary {
                     Some(b) => *b as f64,
@@ -126,6 +140,7 @@ impl Group {
                     end_date: period_end,
                     duration_in_days: round_to_2_decimal_points(hours / 7.5),
                     duration_in_hours: round_to_2_decimal_points(hours),
+                    annual_rate: target_salary,
                     hourly_rate: round_to_2_decimal_points(target_salary / (260.0 * 7.5)), 
                     salary: pay_for_period, 
                 };
