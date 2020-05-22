@@ -2,9 +2,14 @@ use serde::{Deserialize};
 use chrono::prelude::*;
 
 use crate::DataBase;
-use crate::utilities::{convert_string_to_naive_date, check_active_pay_rate};
+use crate::utilities::{
+    convert_string_to_naive_date,
+    check_active_pay_rate,
+    round_to_2_decimal_points
+};
 
 use super::payscale::PayScale;
+use super::pay_period::PayPeriod;
 use super::enums::GroupID;
 
 #[derive(Deserialize, Clone, Debug)]
@@ -49,6 +54,89 @@ impl Group {
     /// Returns a payscale for a specific level within the group.
     pub fn payscale_for_level(&self, level: i32) -> Option<&PayScale> {
         self.pay_scales.iter().find(|p| p.level == level)
+    }
+
+    pub fn pay_at_level_and_step_between_dates(&self, level: i32, step: i32, start_date: NaiveDate, end_date: NaiveDate) -> Option<Vec<PayPeriod>> {
+        let payscale = self.pay_scales.iter().find(|p| p.level == level);
+
+        let payscale = match payscale {
+            Some(p) => p,
+            None => return None
+        };
+
+        // Check for crossing Rates of pay based on dates and add each date to vec
+        let mut relevant_rates_of_pay: Vec<NaiveDate> = Vec::new();
+
+        // Add our start_date to vec
+        relevant_rates_of_pay.push(start_date);
+
+        for rp in &payscale.rates_of_pay {
+            // get all payscale rates of pay in_force dates
+            let target_date = convert_string_to_naive_date(&rp.date_time);
+            
+            // check if rate of pay active between dates and if so, add to our vec
+            if target_date > start_date && target_date <= end_date {
+                relevant_rates_of_pay.push(target_date);
+            }
+        };
+
+        // Add our end_date to vec
+        relevant_rates_of_pay.push(end_date);
+
+        // Create vec of PayPeriods
+        let mut pay_periods: Vec<PayPeriod> = Vec::new();
+
+        // loop through rates of pay and generate Vec<PayPeriod>
+        let max_len = relevant_rates_of_pay.len() as usize;
+
+        for (i, rp) in relevant_rates_of_pay.iter().enumerate() {
+
+            // find the duration in hours within each rate_of_pay using max_len
+            if i < (max_len - 1) {
+                // Start at our start date
+                let period_start = relevant_rates_of_pay[i]; 
+    
+                // identify the end date
+                let period_end = relevant_rates_of_pay[i + 1];
+
+                // find duration in hours
+                let duration = period_end.signed_duration_since(period_start);
+
+                // take raw calendar days and get working hours (approximation)
+                // days / 7.0 (weeks) * 5/0 (working days) * 7.5 (hours per workday)
+                let hours = duration.num_days() as f64 / 7.0 * 5.0 * 7.5;
+
+                // determine rate of pay for period
+                let target_rate = check_active_pay_rate(&payscale.rates_of_pay, *rp);
+    
+                let target_salary = target_rate.salary.get(step as usize -1);
+
+                let target_salary = match target_salary {
+                    Some(b) => *b as f64,
+                    None => 0.0,
+                };
+
+                let pay_for_period = (target_salary / (260.0 * 7.5)) * hours as f64;
+
+                let pay_for_period = round_to_2_decimal_points(pay_for_period);
+
+                // create pay_period
+                let p = PayPeriod {
+                    start_date: period_start,
+                    end_date: period_end,
+                    duration_in_days: round_to_2_decimal_points(hours / 7.5),
+                    duration_in_hours: round_to_2_decimal_points(hours),
+                    hourly_rate: round_to_2_decimal_points(target_salary / (260.0 * 7.5)), 
+                    salary: pay_for_period, 
+                };
+    
+                // add pay_period to vec
+                pay_periods.push(p);
+            };
+
+
+        };
+        Some(pay_periods)
     }
     /// Directly returns the today's in force salary for a level and step within the group
     /// without needing to access pay scales and rates of pay.
