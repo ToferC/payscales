@@ -42,7 +42,7 @@ impl Group {
     pub fn payscales(&self) -> &Vec<PayScale> {
         &self.pay_scales
     }
-    /// Date the collective agreement was scraped.
+    /// Date the collective agreement was scraped in YYYY-MM-DD.
     pub fn date_scraped(&self) -> NaiveDate {
         convert_string_to_naive_date(&self.date_scraped)
     }
@@ -77,7 +77,7 @@ impl Group {
     }
     /// Directly returns the pay at a specified date for a level and step within the group
     /// without needing to access pay scales and rates of pay.
-    /// Accepts level and step as integers and date in a YY-MM-DD string as arguments.
+    /// Accepts level and step as integers and date in a YYYY-MM-DD string as arguments.
     pub fn pay_on_date_for_level_and_step(&self, level: i32, step: i32, date: String) -> Option<&i32> {
         
         let payscale = self.pay_scales.iter().find(|p| p.level == level);

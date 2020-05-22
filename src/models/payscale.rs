@@ -58,7 +58,7 @@ impl PayScale {
 
     }
     
-    // Accepts a YY-MM-DD string and returns the payrate_of_pay in effect for the date provided, past, present or future.
+    // Accepts a YYYY-MM-DD string and returns the payrate_of_pay in effect for the date provided, past, present or future.
     pub fn rate_of_pays_for_date(&self, date: String) -> &RateOfPay {
 
         // get target date and structure for PartialOrd

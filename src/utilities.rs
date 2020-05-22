@@ -23,7 +23,11 @@ pub fn convert_string_to_naive_date(target: &String) -> NaiveDate {
     naive_date
 }
 
-/// Accepts a Vec<RateOfPay> and a YY-MM-DD string and returns the rate_of_pay in effect for the date provided, past, present or future.
+pub fn round_to_2_decimal_points(float: f64) -> f64 {
+    (float * 100.0).round() / 100.0
+}
+
+/// Accepts a Vec<RateOfPay> and a YYYY-MM-DD string and returns the rate_of_pay in effect for the date provided, past, present or future.
 pub fn check_active_pay_rate(rates: &Vec<RateOfPay>, target_date: NaiveDate) -> &RateOfPay {
 
     let mut target = 0;

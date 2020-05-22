@@ -1,5 +1,6 @@
 #[derive(juniper::GraphQLEnum, Clone, Debug, serde::Deserialize, PartialEq)]
 pub enum GroupID {
+    /// GroupID represents a two-letter identifier for a pay group as an enum
     CS,
     CX,
     DS,
@@ -40,4 +41,13 @@ pub enum GroupID {
     TI,
     TR,
     UT,
+}
+
+#[derive(juniper::GraphQLEnum, Clone, Debug, serde::Deserialize, PartialEq)]
+pub enum Period {
+    /// Period represents a period of time in and contains the salary for that period.
+    Annual,
+    Weekly,
+    Daily,
+    Hourly,
 }
