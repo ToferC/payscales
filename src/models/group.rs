@@ -1,5 +1,7 @@
 use serde::{Deserialize};
 use chrono::prelude::*;
+use chrono::Duration;
+use bdays::HolidayCalendar;
 
 use crate::DataBase;
 use crate::utilities::{
@@ -56,8 +58,14 @@ impl Group {
         self.pay_scales.iter().find(|p| p.level == level)
     }
 
+    /// Returns a Pay Period representing the expected pay for a range of work days inclusive of two YYYY-MM-DD dates.
+    /// For example, start_date: "2020-05-01" and end_date: "2020-05-05" would return pay for 1 day of 7.5 hours.
+    /// The function returns work days and holidays (for which public servants receive pay), but not weekends.
     pub fn pay_at_level_and_step_between_dates(&self, level: i32, step: i32, start_date: NaiveDate, end_date: NaiveDate) -> Option<Vec<PayPeriod>> {
         let payscale = self.pay_scales.iter().find(|p| p.level == level);
+
+        // set businessdays calendar to weekends only
+        let cal = bdays::calendars::WeekendsOnly;
 
         let payscale = match payscale {
             Some(p) => p,
@@ -113,14 +121,20 @@ impl Group {
                 let period_end = convert_string_to_naive_date(
                     &relevant_rates_of_pay[i + 1].date_time);
 
-                // find duration in hours
-                let duration = period_end.signed_duration_since(period_start);
+                // get work days in period
+                let cal = bdays::HolidayCalendarCache::new(
+                    bdays::calendars::WeekendsOnly,
+                    period_start,
+                    // add two days to calendar dt_max to capture potential weekend
+                    // and one day to calendar to capture our inclusive range
+                    period_end + Duration::days(3),
+                );
 
-                // take raw calendar days and get working hours (approximation)
-                // days / 7.0 (weeks) * 5/0 (working days) * 7.5 (hours per workday)
-                let days = (duration.num_days() as f64 / 7.0 * 5.0).round();
+                // get business days, excluding only weekends
+                // add 1 day to period_end to get inclusive range
+                let days = cal.bdays(period_start, period_end + Duration::days(1));
 
-                let hours = days * 7.5;
+                let hours = days as f64 * 7.5;
 
                 // determine rate of pay for period    
                 let target_salary = rp.salary.get(step as usize -1);
@@ -130,7 +144,7 @@ impl Group {
                     None => 0.0,
                 };
 
-                let pay_for_period = (target_salary / (260.0 * 7.5)) * hours as f64;
+                let pay_for_period = (target_salary / (261.0 * 7.5)) * hours as f64;
 
                 let pay_for_period = round_to_2_decimal_points(pay_for_period);
 
@@ -138,10 +152,10 @@ impl Group {
                 let p = PayPeriod {
                     start_date: period_start,
                     end_date: period_end,
-                    duration_in_days: round_to_2_decimal_points(hours / 7.5),
-                    duration_in_hours: round_to_2_decimal_points(hours),
+                    work_days: round_to_2_decimal_points(hours / 7.5),
+                    work_hours: round_to_2_decimal_points(hours),
                     annual_rate: target_salary,
-                    hourly_rate: round_to_2_decimal_points(target_salary / (260.0 * 7.5)), 
+                    hourly_rate: round_to_2_decimal_points(target_salary / (261.0 * 7.5)), 
                     salary: pay_for_period, 
                 };
     

@@ -6,8 +6,8 @@ use chrono::prelude::*;
 pub struct PayPeriod {
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
-    pub duration_in_days: f64,
-    pub duration_in_hours: f64,
+    pub work_days: f64,
+    pub work_hours: f64,
     pub hourly_rate: f64,
     pub annual_rate: f64,
     pub salary: f64,
@@ -30,12 +30,12 @@ impl PayPeriod {
         &self.end_date
     }
     /// The duration in hours for a pay period.
-    pub fn duration_in_hours(&self) -> &f64 {
-        &self.duration_in_hours
+    pub fn work_hours(&self) -> &f64 {
+        &self.work_hours
     }
     /// The duration in days for a pay period.
-    pub fn duration_in_days(&self) -> &f64 {
-        &self.duration_in_days
+    pub fn work_days(&self) -> &f64 {
+        &self.work_days
     }
 
     /// The hourly pay rate for a pay period.
