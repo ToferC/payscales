@@ -51,9 +51,16 @@ pub fn check_active_pay_rate(rates: &Vec<RateOfPay>, target_date: NaiveDate) -> 
             }
         
         } else {
-            // Current date isn't within an in forcerate_of_pay
-            // So we should use the lastrate_of_pay available
-            target = end_index;
+            if target_date < convert_string_to_naive_date(&rates[0].date_time) {
+                // target date is before first active pay rate
+                // We will use the first existing pay rate to calculate
+                target = 0
+            } else {
+                // Current date isn't within an in force rate_of_pay
+                // So we should use the lastrate_of_pay available
+                target = end_index;
+            }
+
         }
     }
     

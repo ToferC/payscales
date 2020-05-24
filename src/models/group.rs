@@ -123,7 +123,7 @@ impl Group {
                 let calculation_start = period_start - Duration::days(1);
                 
                 // identify the end date
-                let period_end = convert_string_to_naive_date(
+                let mut period_end = convert_string_to_naive_date(
                     &relevant_rates_of_pay[i + 1].date_time);
                     
                 let mut calculation_end: NaiveDate = period_end;
@@ -131,6 +131,8 @@ impl Group {
                 if i == max_len - 2 {
                     // Set calculation start date at period +1 to include last day
                     calculation_end += Duration::days(1);
+                } else {
+                    period_end -= Duration::days(1);
                 }
 
                 // get work days in period
