@@ -58,9 +58,10 @@ impl Group {
         self.pay_scales.iter().find(|p| p.level == level)
     }
 
-    /// Returns a Pay Period representing the expected pay for a range of work days inclusive of two YYYY-MM-DD dates.
+    /// Returns a vector of PayPeriods representing the expected pay for a range of work days inclusive of two YYYY-MM-DD dates.
     /// For example, start_date: "2020-05-01" and end_date: "2020-05-05" would return pay for 1 day of 7.5 hours.
     /// The function returns work days and holidays (for which public servants receive pay), but not weekends.
+    /// Also requires a level and step in integers to compute the requested pay.
     pub fn pay_at_level_and_step_between_dates(&self, level: i32, step: i32, start_date: NaiveDate, end_date: NaiveDate) -> Option<Vec<PayPeriod>> {
         let payscale = self.pay_scales.iter().find(|p| p.level == level);
 
@@ -113,21 +114,34 @@ impl Group {
 
             // find the duration in hours within each rate_of_pay using max_len
             if i < (max_len - 1) {
+
                 // Start at our start date
                 let period_start = convert_string_to_naive_date(
-                    &relevant_rates_of_pay[i].date_time); 
-    
+                    &relevant_rates_of_pay[i].date_time);
+
+                // Set calculation start date at period -1 to include day 1 of period
+                let calculation_start = period_start - Duration::days(1);
+                
                 // identify the end date
                 let period_end = convert_string_to_naive_date(
                     &relevant_rates_of_pay[i + 1].date_time);
+                    
+                let mut calculation_end: NaiveDate = period_end;
+                
+                if i == max_len - 2 {
+                    // Set calculation start date at period +1 to include last day
+                    calculation_end += Duration::days(1);
+                }
 
                 // get work days in period
                 let cal = bdays::HolidayCalendarCache::new(
                     bdays::calendars::WeekendsOnly,
-                    period_start,
+                    // Using calculation start and end here while keeping the display dates
+                    // the same as the user query
+                    calculation_start,
                     // add two days to calendar dt_max to capture potential weekend
                     // and one day to calendar to capture our inclusive range
-                    period_end + Duration::days(3),
+                    calculation_end + Duration::days(3),
                 );
 
                 // get business days, excluding only weekends
