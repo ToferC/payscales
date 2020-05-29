@@ -1,5 +1,3 @@
-#[macro_use]
-
 use std::sync::Arc;
 
 use actix_web::{web, post, HttpResponse, Error};

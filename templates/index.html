@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+    <div class="column" style="width:50px"></div>
+
+    <div class="column">
+        <h1>Welcome to GC-PayScales</h1>
+            <p>This application is an API for Government of Canada pay/salary scales for classifications and levels. The intent is to have a central, easy to access and use resource for accurate pay information. This will reduce duplication and potential errors across organizations and serve as an example of how APIs can support day-to-day business in government.</p>
+            
+            <p>You can explore and experiment with the API here: <a href="https://gc-payscales.herokuapp.com/playground">https://gc-payscales.herokuapp.com/playground</a></p>
+            
+            <p>A sample query looks like this:</p>
+
+                <pre>
+                    <code>
+                        query GroupQuery {
+                            group(identifier: PM) {
+                              payscaleForLevel(level:3) {
+                                steps
+                              }
+                              identifier
+                              payAtLevelAndStepBetweenDates(
+                                  level: 3
+                                step: 2
+                                startDate:"2010-01-01"
+                                endDate:"2020-07-30"
+                              ){
+                                startDate
+                                endDate
+                                workDays
+                                workHours
+                                hourlyRate
+                                annualRate
+                                salary
+                              }
+                            }
+                          }
+                    </code>
+                </pre>
+
+            <p>If you'd like to test the API, you can upload a CSV (Comma Separated Values) file in the following format:</p>
+
+            <hr>
+            <table>
+                <tr>
+                    <th>last_name</th>
+                    <th>first_name</th>
+                    <th>group</th>
+                    <th>level</th>
+                    <th>step</th>
+                    <th>start_date</th>
+                    <th>end_date</th>
+                </tr>
+                <tr>
+                    <td>Beta</td>
+                    <td>Beatrice</td>
+                    <td>EC</td>
+                    <td>4</td>
+                    <td>1</td>
+                    <td>2019-01-20</td>
+                    <td>2020-01-20</td>
+                </tr>
+                <tr>
+                    <td>Delta</td>
+                    <td>Delphine</td>
+                    <td>FB</td>
+                    <td>6</td>
+                    <td>3</td>
+                    <td>2019-01-20</td>
+                    <td>2020-01-20</td>
+                </tr>
+                <tr>
+                    <td>Epsilon</td>
+                    <td>Edgar</td>
+                    <td>CS</td>
+                    <td>2</td>
+                    <td>3</td>
+                    <td>2019-01-20</td>
+                    <td>2020-01-20</td>
+                </tr>
+                <tr>
+                    <td>Gamma</td>
+                    <td>Geralt</td>
+                    <td>PM</td>
+                    <td>4</td>
+                    <td>3</td>
+                    <td>2019-01-20</td>
+                    <td>2020-01-20</td>
+                </tr>
+            </table>
+
+            <hr>
+
+            <p>You can include as many rows as you need.</p>
+            <p>The site will take your spreadsheet, call the API and generate a new CSV file with your results.
+                You can then download or open the file to see the results.</p>
+
+                <form target="/" method="post" enctype="multipart/form-data">
+                    <input type="file" multiple name="file"/>
+                    <input type="submit" value="Submit"></button>
+                </form>
+            
+            <hr>
+        
+            <p>Please note that this work is a learning project, may contain errors and should not be used to make pay-related decisions.</p>
+            <p>The PayScraper project is available on GitHub under an MIT licence here: <a href="https://github.com/ToferC/payscraper">https://github.com/ToferC/payscraper</a></p>
+            <p>The API is available here under the same licence: <a href="https://github.com/ToferC/payscales">https://github.com/ToferC/payscales</a></p>
+        
+            <p>Developed by ToferC 2020</p>
+        </div>
+    <div class="column" style="width:50px"></div>
+    </main>
+{% endblock content %}

@@ -5,7 +5,7 @@ extern crate diesel;
 use std::env;
 
 use actix_web::{App, HttpServer, web, middleware};
-
+use tera::{Tera};
 
 mod graphql_schema;
 mod utilities;
@@ -39,6 +39,10 @@ impl DataBase {
             groups: groups.clone(),
         }
     }
+}
+
+struct AppData {
+    tmpl: Tera
 }
 
 #[actix_rt::main]
@@ -82,11 +86,16 @@ async fn main() -> std::io::Result<()> {
     let schema = std::sync::Arc::new(create_schema());
 
     HttpServer::new(move || {
+
+        let tera = Tera::new(
+                concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*")).unwrap();
         App::new()
             .data(schema.clone())
             .data(ctx.clone())
+            .data(AppData {tmpl: tera} )
             .wrap(middleware::Logger::default())
             .service(handlers::index)
+            .service(handlers::upload_file)
             .service(handlers::api_base)
             .service(handlers::api_group)
             .service(handlers::api_group_level)

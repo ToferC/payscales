@@ -1,4 +1,4 @@
-#[derive(juniper::GraphQLEnum, Clone, Debug, serde::Deserialize, PartialEq)]
+#[derive(juniper::GraphQLEnum, Clone, Copy, Debug, serde::Deserialize, PartialEq)]
 pub enum GroupID {
     /// GroupID represents a two-letter identifier for a pay group as an enum
     CS,
