@@ -80,6 +80,8 @@ async fn main() -> std::io::Result<()> {
 
     // create context object
 
+    println!("{}", env!("CARGO_MANIFEST_DIR"));
+
     let ctx = DataBase::new();
 
     // Create Juniper Schema
@@ -88,7 +90,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
 
         let tera = Tera::new(
-                concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*")).unwrap();
+                "templates/**/*").unwrap();
         App::new()
             .data(schema.clone())
             .data(ctx.clone())
