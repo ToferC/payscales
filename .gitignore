@@ -16,4 +16,5 @@ Cargo.lock
 
 .env
 result.csv
+tmp.csv
 schema.json

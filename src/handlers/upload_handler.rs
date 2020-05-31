@@ -6,6 +6,8 @@ use graphql_client::{GraphQLQuery, Response};
 use serde::{Serialize, Deserialize};
 use chrono::prelude::*;
 
+use std::io::Write;
+
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "group_schema.graphql",
@@ -47,24 +49,30 @@ async fn upload_file(mut payload: Multipart) -> Result<NamedFile, Error> {
     let mut csv_iter = Vec::new();
     let mut data_vec = Vec::new();
     let mut wtr = csv::Writer::from_path("result.csv").unwrap();
-    let mut data = bytes::Bytes::new();
 
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
         let filename = content_type.get_filename().unwrap();
         let _filepath = format!("./tmp/{}", &filename);
 
+        // File::create is blocking operation, use threadpool
+        let mut f = web::block(|| std::fs::File::create("tmp.csv"))
+            .await
+            .unwrap();
+
         while let Some(chunk) = field.next().await {
-            data = chunk.unwrap();
+            let data = chunk.unwrap();
+            // filesystem operations are blocking, we have to use threadpool
+            f = web::block(move || f.write_all(&data).map(|_| f)).await?;
         }
     }
-    
-    let mut rdr = csv::Reader::from_reader(data.as_ref());
+     
+    let mut rdr = csv::Reader::from_path("tmp.csv").unwrap();
 
     for result in rdr.deserialize() {
         let record: Record = result.unwrap();
         csv_iter.push(record);
-    }
+    };
 
     for r in csv_iter {
 
