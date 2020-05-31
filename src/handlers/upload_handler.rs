@@ -1,4 +1,4 @@
-use actix_web::{post, Error};
+use actix_web::{post, Error, web};
 use actix_files::NamedFile;
 use actix_multipart::Multipart;
 use futures::{StreamExt, TryStreamExt};
@@ -74,7 +74,7 @@ async fn upload_file(mut payload: Multipart) -> Result<NamedFile, Error> {
             group_str = format!("{:?}", &r.group);
         }
 
-        let response_data = pay_query(r.group, r.level, r.step, r.start_date, r.end_date).expect("Error on Graphql query");
+        let response_data = pay_query(r.group, r.level, r.step, r.start_date, r.end_date).await?;
 
         for period in response_data {
             
@@ -100,17 +100,20 @@ async fn upload_file(mut payload: Multipart) -> Result<NamedFile, Error> {
     for e in &data_vec {
         wtr.serialize(e).unwrap();
     }
-    wtr.flush().unwrap();
+
+    let _r = web::block(move ||
+        wtr.flush()
+    );
 
     Ok(NamedFile::open("result.csv")?)
 }
 
-pub fn pay_query(
+async fn pay_query(
     identifier1: query::GroupID, 
     level: i64, 
     step: i64, 
     start_date: NaiveDate, 
-    end_date: NaiveDate) -> Result<Vec<(String, String, f64, f64, f64, f64, f64)>, Box<dyn std::error::Error>> {
+    end_date: NaiveDate) -> Result<Vec<(String, String, f64, f64, f64, f64, f64)>, Error> {
 
     let request_body = Query::build_query(query::Variables {
         identifier1, 
@@ -121,8 +124,8 @@ pub fn pay_query(
     });
 
     let client = reqwest::Client::new();
-    let mut res = client.post("https://gc-payscales.herokuapp.com/graphql").json(&request_body).send()?;
-    let response_body: Response<query::ResponseData> = res.json()?;
+    let mut res = client.post("https://gc-payscales.herokuapp.com/graphql").json(&request_body).send().expect("Error sending query");
+    let response_body: Response<query::ResponseData> = res.json().expect("Failed to receive response");
 
     if let Some(errors) = response_body.errors {
         println!("there are errors:");
