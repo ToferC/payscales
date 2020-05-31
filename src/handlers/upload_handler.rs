@@ -123,9 +123,18 @@ async fn pay_query(
         end_date
     });
 
-    let client = reqwest::Client::new();
-    let mut res = client.post("https://gc-payscales.herokuapp.com/graphql").json(&request_body).send().expect("Error sending query");
-    let response_body: Response<query::ResponseData> = res.json().expect("Failed to receive response");
+    // Async request
+    let res = reqwest::Client::new()
+        .post("https://gc-payscales.herokuapp.com/graphql")
+        .json(&request_body)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+    let response_body: Response<query::ResponseData> = res;
 
     if let Some(errors) = response_body.errors {
         println!("there are errors:");
