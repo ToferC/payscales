@@ -47,6 +47,7 @@ async fn upload_file(mut payload: Multipart) -> Result<NamedFile, Error> {
     let mut csv_iter = Vec::new();
     let mut data_vec = Vec::new();
     let mut wtr = csv::Writer::from_path("result.csv").unwrap();
+    let mut data = bytes::Bytes::new();
 
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
@@ -54,15 +55,15 @@ async fn upload_file(mut payload: Multipart) -> Result<NamedFile, Error> {
         let _filepath = format!("./tmp/{}", &filename);
 
         while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-
-            let mut rdr = csv::Reader::from_reader(data.as_ref());
-
-            for result in rdr.deserialize() {
-                let record: Record = result.unwrap();
-                csv_iter.push(record);
-            }
+            data = chunk.unwrap();
         }
+    }
+    
+    let mut rdr = csv::Reader::from_reader(data.as_ref());
+
+    for result in rdr.deserialize() {
+        let record: Record = result.unwrap();
+        csv_iter.push(record);
     }
 
     for r in csv_iter {
