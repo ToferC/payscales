@@ -105,13 +105,15 @@ async fn upload_file(mut payload: Multipart) -> Result<NamedFile, Error> {
         }
     }
 
-    for e in &data_vec {
-        wtr.serialize(e).unwrap();
-    }
+    // Block for file operations
+    let _r = web::block(move || {
 
-    let _r = web::block(move ||
+        for e in &data_vec {
+            wtr.serialize(e).unwrap();
+        }
+    
         wtr.flush()
-    );
+    }).await?;
 
     Ok(NamedFile::open("result.csv")?)
 }
