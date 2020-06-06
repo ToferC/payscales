@@ -7,10 +7,11 @@ use crate::DataBase;
 use crate::utilities::{
     convert_string_to_naive_date,
     check_active_pay_rate,
+    return_active_pay_for_period,
     round_to_2_decimal_points
 };
 
-use crate::models::{PayScale, RateOfPay};
+use crate::models::{PayScale, RateOfPay, ActiveRateOfPay};
 use super::pay_period::PayPeriod;
 use super::enums::GroupID;
 
@@ -170,9 +171,12 @@ impl Group {
                     end_date: period_end,
                     work_days: round_to_2_decimal_points(hours / 7.5),
                     work_hours: round_to_2_decimal_points(hours),
+                    step: step,
                     annual_rate: target_salary,
                     hourly_rate: round_to_2_decimal_points(target_salary / (261.0 * 7.5)), 
                     salary: pay_for_period, 
+                    level: level,
+                    identifier: self.identifier,
                 };
     
                 // add pay_period to vec
@@ -183,6 +187,129 @@ impl Group {
         };
         Some(pay_periods)
     }
+
+    /// Returns a vector of PayPeriods representing the expected pay for a range of work days inclusive of two YYYY-MM-DD dates.
+    /// For example, start_date: "2020-05-01" and end_date: "2020-05-05" would return pay for 1 day of 7.5 hours.
+    /// The function returns work days and holidays (for which public servants receive pay), but not weekends.
+    /// Also requires a level and step in integers to compute the requested pay.
+    pub fn pay_at_level_by_anniversary_date_between_dates(&self, level: i32, start_date: NaiveDate, end_date: NaiveDate, anniversary_date: NaiveDate) -> Option<Vec<PayPeriod>> {
+        let payscale = self.pay_scales.iter().find(|p| p.level == level);
+
+        // use payscales to generate active_rates_of_pay for period
+
+        // set businessdays calendar to weekends only
+        let cal = bdays::calendars::WeekendsOnly;
+
+        let payscale = match payscale {
+            Some(p) => p,
+            None => return None
+        };
+
+        // determine step based on anniversary date
+        let step: i32 = 0;
+
+        // Create vec of anniversary dates
+        let mut steps: Vec<(NaiveDate, NaiveDate)> = Vec::new();
+
+
+        // Need to get active pay rates for each rate of pay
+        // Call for first one
+        // Call for intermediate pay rates in date range
+        // Call for last one
+
+        // add years as NaiveDate to Vec from anniversary date to max anniversary 
+        // Note that we are adding more steps than required so we can keep a loop going
+        // in return_active_pay_for_periods
+        for y in anniversary_date.year()..end_date.year() + (payscale.steps - 1) {
+            let c = NaiveDate::from_ymd(y, anniversary_date.month(), anniversary_date.day());
+            let e = NaiveDate::from_ymd(y, anniversary_date.month(), anniversary_date.day()) + Duration::days(365);
+            steps.push((c, e));
+        }
+
+        // Check for crossing Rates of pay based on dates and add each date to vec
+        let mut relevant_rates_of_pay: Vec<&ActiveRateOfPay> = Vec::new();
+
+        // Get vec of periods with annual pay, step, start and end dates
+        // This needs to get all pay periods in range and split them for anniversary date
+        // We should do this
+        let active_rates = return_active_pay_for_period(&payscale, steps, start_date, end_date);
+
+        ////////////
+        println!("{:?}", &active_rates);
+
+        // Create vec of PayPeriods
+        let mut pay_periods: Vec<PayPeriod> = Vec::new();
+
+        // loop through rates of pay and generate Vec<PayPeriod>
+        let max_len = active_rates.len() as usize;
+
+        for (i, rp) in active_rates.iter().enumerate() {
+
+            // find the duration in hours within each rate_of_pay using max_len
+            if i < (max_len - 1) {
+
+                // Start at our start date
+                let period_start = active_rates[i].start_date;
+
+                // Set calculation start date at period -1 to include day 1 of period
+                let calculation_start = period_start - Duration::days(1);
+                
+                // identify the end date
+                let mut period_end = active_rates[i].end_date;
+                    
+                let mut calculation_end: NaiveDate = period_end;
+                
+                if i == max_len - 2 {
+                    // Set calculation start date at period +1 to include last day
+                    calculation_end += Duration::days(1);
+                } else {
+                    period_end -= Duration::days(1);
+                }
+
+                // get work days in period
+                let cal = bdays::HolidayCalendarCache::new(
+                    bdays::calendars::WeekendsOnly,
+                    // Using calculation start and end here while keeping the display dates
+                    // the same as the user query
+                    calculation_start,
+                    // add two days to calendar dt_max to capture potential weekend
+                    // and one day to calendar to capture our inclusive range
+                    calculation_end + Duration::days(3),
+                );
+
+                // get business days, excluding only weekends
+                // add 1 day to period_end to get inclusive range
+                let days = cal.bdays(period_start, period_end + Duration::days(1));
+
+                let hours = days as f64 * 7.5;
+
+                let pay_for_period = (rp.salary as f64 / (261.0 * 7.5)) * hours as f64;
+
+                let pay_for_period = round_to_2_decimal_points(pay_for_period);
+
+                // create pay_period
+                let p = PayPeriod {
+                    start_date: period_start,
+                    end_date: period_end,
+                    work_days: round_to_2_decimal_points(hours / 7.5),
+                    work_hours: round_to_2_decimal_points(hours),
+                    step: rp.step,
+                    annual_rate: rp.salary as f64,
+                    hourly_rate: round_to_2_decimal_points(rp.salary as f64 / (261.0 * 7.5)), 
+                    salary: pay_for_period,
+                    level: level,
+                    identifier: self.identifier,
+                };
+    
+                // add pay_period to vec
+                pay_periods.push(p);
+            };
+
+
+        };
+        Some(pay_periods)
+    }
+
     /// Directly returns the today's in force salary for a level and step within the group
     /// without needing to access pay scales and rates of pay.
     /// Accepts level and step as integers as arguments.

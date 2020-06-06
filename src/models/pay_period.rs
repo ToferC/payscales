@@ -1,6 +1,8 @@
 use serde::{Deserialize};
 use chrono::prelude::*;
 
+use crate::models::GroupID;
+
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all= "snake_case")]
 pub struct PayPeriod {
@@ -8,9 +10,12 @@ pub struct PayPeriod {
     pub end_date: NaiveDate,
     pub work_days: f64,
     pub work_hours: f64,
+    pub step: i32,
     pub hourly_rate: f64,
     pub annual_rate: f64,
     pub salary: f64,
+    pub identifier: GroupID,
+    pub level: i32,
 }
 
 #[juniper::object()]
@@ -36,6 +41,21 @@ impl PayPeriod {
     /// The duration in days for a pay period.
     pub fn work_days(&self) -> &f64 {
         &self.work_days
+    }
+
+    /// The active pay step for a pay period.
+    pub fn step(&self) -> &i32 {
+        &self.step
+    }
+
+    /// The active pay level for a pay period.
+    pub fn level(&self) -> &i32 {
+        &self.level
+    }
+
+    /// The identifier for a pay period.
+    pub fn identifier(&self) -> &GroupID {
+        &self.identifier
     }
 
     /// The hourly pay rate for a pay period.
