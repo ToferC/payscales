@@ -1,6 +1,6 @@
 [package]
 name = "payscales"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["toferc <cgeist7@gmail.com>"]
 edition = "2018"
 

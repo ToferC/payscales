@@ -72,6 +72,49 @@ pub fn check_active_pay_rate(rates: &Vec<RateOfPay>, target_date: NaiveDate) -> 
 }
 
 /// Accepts a Vec<RateOfPay> and a YYYY-MM-DD string and returns the rate_of_pay in effect for the date provided, past, present or future.
+pub fn return_active_rate_index(rates: &Vec<RateOfPay>, target_date: NaiveDate) -> usize {
+
+    let mut target = 0;
+    let end_index = rates.len() - 1;
+    
+    for (i,_rate_of_pay) in rates.iter().enumerate() {
+
+        if i < end_index {
+            // set start_date forrate_of_pay 
+            let start_date = convert_string_to_naive_date(&rates[i].date_time);
+
+            // get the end date forrate_of_pay
+            let end_date = convert_string_to_naive_date(&rates[i+1].date_time);
+
+            // Check to see if today's date is withing therate_of_pay start and end dates
+
+            if target_date > start_date && target_date <= end_date {
+                // set target to current index
+                target = i;
+                break
+            }
+        
+        } else {
+            if target_date < convert_string_to_naive_date(&rates[0].date_time) {
+                // target date is before first active pay rate
+                // We will use the first existing pay rate to calculate
+                target = 0
+            } else {
+                // Current date isn't within an in force rate_of_pay
+                // So we should use the lastrate_of_pay available
+                target = end_index;
+            }
+
+        }
+    }
+    
+    // returnrate_of_pay for this date
+    target
+}
+
+/// Accepts a PayScale, Vec<(NaiveDate, NaiveDate)> for pay steps
+/// and YYYY-MM-DD strings for start and end date
+/// rRturns a vec of active_rate_of_pay for the date range provided, past, present or future.
 pub fn return_active_pay_for_period(
     payscale: &PayScale,
     steps: Vec<(NaiveDate, NaiveDate)>,
@@ -81,13 +124,10 @@ pub fn return_active_pay_for_period(
 
     let rates = &payscale.rates_of_pay;
 
-    let mut target = 0;
     let mut step = 0;
-    let mut anniversary_date: NaiveDate = NaiveDate::from_ymd(1960, 01, 01);
-    let mut rate_end: NaiveDate = NaiveDate::from_ymd(1960, 01, 01);
 
-    let end_index = rates.len() - 1;
     let max_step = payscale.steps as usize - 1;
+    let max_rate = payscale.rates_of_pay.len() - 1;
 
     let mut active_rates_of_pay = Vec::new();
 
@@ -95,7 +135,6 @@ pub fn return_active_pay_for_period(
     for (i, (s, e)) in steps.iter().enumerate() {
         if start_date > *s && start_date < *e {
             step = i;
-            anniversary_date = *s
         }
     };
 
@@ -103,15 +142,7 @@ pub fn return_active_pay_for_period(
 
     // return the step with a max derived from the payscale
     let cap_step = {|s| cmp::min(s, max_step)};
-
-    // return the latter of two NaiveDates
-    let later_date = {|d1: NaiveDate, d2: NaiveDate| {
-        if d1 > d2 {
-            d1
-        } else {
-            d2
-        }
-    }};
+    let cap_rate = {|r| cmp::min(r, max_rate)};
 
     let earlier_date = {|d1: NaiveDate, d2: NaiveDate| {
         if d1 < d2 {
@@ -121,39 +152,91 @@ pub fn return_active_pay_for_period(
         }
     }};
 
-    let first_in_force = convert_string_to_naive_date(&rates[0].date_time);
+    // period falls within in_force pay_scale
+    let mut sd = start_date;
+    let mut rate_index = return_active_rate_index(rates, sd);
+    
+    while sd < end_date {
+        // loop through steps
 
-    // get potential period that starts before in force for payscale
-    if start_date < first_in_force && end_date < first_in_force {
+        // returnrate_of_pay for this date and starting step
+        let rp = &rates[cap_rate(rate_index)];
+        let salary = rp.salary.get(cap_step(step));
 
-        let mut sd = start_date;
-        
-        while sd < end_date {
-            // loop through steps
-            for st in &steps {
-                if st.0 > start_date && st.0 < first_in_force {
+        // Missing the first pay_rate
 
-                    // returnrate_of_pay for this date and starting step
-                    let salary = &rates[target].salary.get(cap_step(step));
-                    let sal = match salary {
-                        Some(s) => **s,
-                        _ => 0,
-                    };
-
-                    let a = ActiveRateOfPay {
-                        start_date: sd,
-                        end_date: earlier_date(st.1, end_date),
-                        step: cap_step(step) as i32 + 1,
-                        salary: sal,
-                    };
-
-                    active_rates_of_pay.push(a);
-                    sd = earlier_date(st.1, end_date);
-                    step += 1;
-                };
-            };
+        let next_rate_index = {
+            if rate_index >= max_rate {
+                max_rate
+            } else {
+                rate_index + 1
+            }
         };
-    }
+
+        let next_in_force_date = convert_string_to_naive_date(&rates[next_rate_index].date_time);
+
+        println!("Next_In_force: {:?}", next_in_force_date);
+        println!("Next_step: {:?}", steps[step].1);
+
+
+        let sal = match salary {
+            Some(s) => *s,
+            _ => 0,
+        };
+
+        // st start == anniversary date in force
+        // st end == anniversary date ends
+        // in_force_date == new pay_scale comes in force
+        // sd == the earlir of the pay scale start in a vec of years
+        // or the date the current payscale came in force
+
+        // Calculate whether to end next period with a step date or in_force_date
+        let mut period_end = {
+            if next_rate_index == &rates.len() - 1 {
+                steps[step].1
+            } else {
+                if steps[step].1.signed_duration_since(sd) < next_in_force_date.signed_duration_since(sd) {
+                    steps[step].1
+                } else {
+                    next_in_force_date
+                }
+            }
+        };
+
+        period_end = earlier_date(period_end, end_date);
+
+        println!("Period_end: {:?}", period_end);
+
+        // Create struct
+        let a = ActiveRateOfPay {
+            start_date: sd,
+            end_date: period_end,
+            step: cap_step(step) as i32 + 1,
+            salary: sal,
+        };
+
+        // Add to vec
+        active_rates_of_pay.push(a);
+
+        // set the new sd for loop
+        sd = period_end;
+
+        // catch last loop
+        if sd >= end_date {
+            break
+        }
+
+        // if the sd crosses a step, increment the step
+        if sd >= steps[step].1 {
+            step += 1;
+            println!("Increase_step: {:?}", step);
+        }
+
+        if sd >= convert_string_to_naive_date(&rates[next_rate_index].date_time) {
+            rate_index += 1;
+            println!("Increase_rate_index: {:?}", step);
+        }        
+    };
     
     active_rates_of_pay
 }

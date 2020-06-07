@@ -1,3 +1,5 @@
+use std::cmp;
+
 use serde::{Deserialize};
 use chrono::prelude::*;
 use chrono::Duration;
@@ -188,10 +190,10 @@ impl Group {
         Some(pay_periods)
     }
 
-    /// Returns a vector of PayPeriods representing the expected pay for a range of work days inclusive of two YYYY-MM-DD dates.
+    /// Returns a vector of PayPeriods representing the expected pay including annual step increments for a range of work days inclusive of two YYYY-MM-DD dates.
     /// For example, start_date: "2020-05-01" and end_date: "2020-05-05" would return pay for 1 day of 7.5 hours.
     /// The function returns work days and holidays (for which public servants receive pay), but not weekends.
-    /// Also requires a level and step in integers to compute the requested pay.
+    /// Also requires a level in integers and an anniversary date in YYYY-MM-DD for the group and level to compute the requested pay.
     pub fn pay_at_level_by_anniversary_date_between_dates(&self, level: i32, start_date: NaiveDate, end_date: NaiveDate, anniversary_date: NaiveDate) -> Option<Vec<PayPeriod>> {
         let payscale = self.pay_scales.iter().find(|p| p.level == level);
 
@@ -220,11 +222,13 @@ impl Group {
         // add years as NaiveDate to Vec from anniversary date to max anniversary 
         // Note that we are adding more steps than required so we can keep a loop going
         // in return_active_pay_for_periods
-        for y in anniversary_date.year()..end_date.year() + (payscale.steps - 1) {
-            let c = NaiveDate::from_ymd(y, anniversary_date.month(), anniversary_date.day());
+        for y in anniversary_date.year()..end_date.year() + cmp::max(payscale.steps -1, 2) {
+            let s = NaiveDate::from_ymd(y, anniversary_date.month(), anniversary_date.day());
             let e = NaiveDate::from_ymd(y, anniversary_date.month(), anniversary_date.day()) + Duration::days(365);
-            steps.push((c, e));
+            steps.push((s, e));
         }
+
+        println!("{:?}", steps);
 
         // Check for crossing Rates of pay based on dates and add each date to vec
         let mut relevant_rates_of_pay: Vec<&ActiveRateOfPay> = Vec::new();
@@ -233,9 +237,6 @@ impl Group {
         // This needs to get all pay periods in range and split them for anniversary date
         // We should do this
         let active_rates = return_active_pay_for_period(&payscale, steps, start_date, end_date);
-
-        ////////////
-        println!("{:?}", &active_rates);
 
         // Create vec of PayPeriods
         let mut pay_periods: Vec<PayPeriod> = Vec::new();
@@ -246,20 +247,20 @@ impl Group {
         for (i, rp) in active_rates.iter().enumerate() {
 
             // find the duration in hours within each rate_of_pay using max_len
-            if i < (max_len - 1) {
+            if i < max_len {
 
                 // Start at our start date
-                let period_start = active_rates[i].start_date;
+                let period_start = rp.start_date;
 
                 // Set calculation start date at period -1 to include day 1 of period
                 let calculation_start = period_start - Duration::days(1);
                 
                 // identify the end date
-                let mut period_end = active_rates[i].end_date;
+                let mut period_end = rp.end_date;
                     
                 let mut calculation_end: NaiveDate = period_end;
                 
-                if i == max_len - 2 {
+                if i == max_len - 1 {
                     // Set calculation start date at period +1 to include last day
                     calculation_end += Duration::days(1);
                 } else {
