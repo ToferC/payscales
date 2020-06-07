@@ -2,8 +2,6 @@ use serde::{Deserialize};
 use chrono::prelude::*;
 
 use crate::DataBase;
-use crate::utilities::{convert_string_to_naive_date, round_to_2_decimal_points};
-use super::enums::{Period};
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all= "snake_case")]

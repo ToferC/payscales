@@ -4,7 +4,6 @@ use std::io::{BufReader};
 use std::cmp;
 
 use chrono::prelude::*;
-use chrono::Duration;
 
 use crate::models::{Group, PayScale, RateOfPay, ActiveRateOfPay};
 
@@ -175,10 +174,6 @@ pub fn return_active_pay_for_period(
 
         let next_in_force_date = convert_string_to_naive_date(&rates[next_rate_index].date_time);
 
-        println!("Next_In_force: {:?}", next_in_force_date);
-        println!("Next_step: {:?}", steps[step].1);
-
-
         let sal = match salary {
             Some(s) => *s,
             _ => 0,
@@ -205,8 +200,6 @@ pub fn return_active_pay_for_period(
 
         period_end = earlier_date(period_end, end_date);
 
-        println!("Period_end: {:?}", period_end);
-
         // Create struct
         let a = ActiveRateOfPay {
             start_date: sd,
@@ -229,12 +222,10 @@ pub fn return_active_pay_for_period(
         // if the sd crosses a step, increment the step
         if sd >= steps[step].1 {
             step += 1;
-            println!("Increase_step: {:?}", step);
         }
 
         if sd >= convert_string_to_naive_date(&rates[next_rate_index].date_time) {
             rate_index += 1;
-            println!("Increase_rate_index: {:?}", step);
         }        
     };
     

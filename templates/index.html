@@ -14,18 +14,19 @@
 
                 <pre>
                     <code>
-                        query GroupQuery {
-                            group(identifier: PM) {
-                              payscaleForLevel(level:3) {
+                        query AnniversaryQuery {
+                            group(identifier: EC) {
+                              payscaleForLevel(level:4) {
                                 steps
                               }
                               identifier
-                              payAtLevelAndStepBetweenDates(
-                                  level: 3
-                                step: 2
-                                startDate:"2010-01-01"
-                                endDate:"2020-07-30"
+                              payAtLevelByAnniversaryDateBetweenDates(
+                                level: 4,
+                                anniversaryDate: "2017-02-08",
+                                startDate: "2018-01-01",
+                                endDate: "2020-06-30"
                               ){
+                                step
                                 startDate
                                 endDate
                                 workDays
@@ -48,7 +49,7 @@
                     <th>first_name</th>
                     <th>group</th>
                     <th>level</th>
-                    <th>step</th>
+                    <th>anniversary_date</th>
                     <th>start_date</th>
                     <th>end_date</th>
                 </tr>
@@ -57,7 +58,7 @@
                     <td>Beatrice</td>
                     <td>EC</td>
                     <td>4</td>
-                    <td>1</td>
+                    <td>2018-06-08</td>
                     <td>2019-01-20</td>
                     <td>2020-01-20</td>
                 </tr>
@@ -66,7 +67,7 @@
                     <td>Delphine</td>
                     <td>FB</td>
                     <td>6</td>
-                    <td>3</td>
+                    <td>2018-06-08</td>
                     <td>2019-01-20</td>
                     <td>2020-01-20</td>
                 </tr>
@@ -75,7 +76,7 @@
                     <td>Edgar</td>
                     <td>CS</td>
                     <td>2</td>
-                    <td>3</td>
+                    <td>2018-06-08</td>
                     <td>2019-01-20</td>
                     <td>2020-01-20</td>
                 </tr>
@@ -84,7 +85,7 @@
                     <td>Geralt</td>
                     <td>PM</td>
                     <td>4</td>
-                    <td>3</td>
+                    <td>2018-06-08</td>
                     <td>2019-01-20</td>
                     <td>2020-01-20</td>
                 </tr>
@@ -104,6 +105,7 @@
             <hr>
             <p>The resulting document will break up pay by agreement in force at the time and have the following new columns:</p>
             <ul>
+                <li>pay_step</li>
                 <li>work_hours</li>
                 <li>work_days</li>
                 <li>hourly_rate</li>

@@ -2,6 +2,29 @@ schema {
   query: QueryRoot
 }
 
+type QueryRoot {
+  groups: [Group!]!
+  group(identifier: GroupID!): Group!
+}
+
+enum Period {
+  ANNUAL
+  WEEKLY
+  DAILY
+  HOURLY
+}
+
+type PayScale {
+  name: String!
+  level: Int!
+  steps: Int!
+  ratesOfPay: [RateOfPay!]!
+  currentRatesOfPay: RateOfPay!
+  rateOfPaysForDate(date: String!): RateOfPay!
+}
+
+scalar NaiveDate
+
 type Group {
   name: String!
   identifier: GroupID!
@@ -15,8 +38,32 @@ type Group {
     startDate: NaiveDate!
     endDate: NaiveDate!
   ): [PayPeriod!]
+  payAtLevelByAnniversaryDateBetweenDates(
+    level: Int!
+    startDate: NaiveDate!
+    endDate: NaiveDate!
+    anniversaryDate: NaiveDate!
+  ): [PayPeriod!]
   payInForceForLevelAndStep(level: Int!, step: Int!): Int
   payOnDateForLevelAndStep(level: Int!, step: Int!, date: String!): Int
+}
+
+type PayPeriod {
+  startDate: NaiveDate!
+  endDate: NaiveDate!
+  workHours: Float!
+  workDays: Float!
+  step: Int!
+  level: Int!
+  identifier: GroupID!
+  hourlyRate: Float!
+  annualRate: Float!
+  salary: Float
+}
+
+type RateOfPay {
+  inForce: NaiveDate!
+  salary(step: Int!, period: Period!): Float
 }
 
 enum GroupID {
@@ -62,40 +109,3 @@ enum GroupID {
   UT
 }
 
-scalar NaiveDate
-
-type PayPeriod {
-  startDate: NaiveDate!
-  endDate: NaiveDate!
-  workHours: Float!
-  workDays: Float!
-  hourlyRate: Float!
-  annualRate: Float!
-  salary: Float
-}
-
-type PayScale {
-  name: String!
-  level: Int!
-  steps: Int!
-  ratesOfPay: [RateOfPay!]!
-  currentRatesOfPay: RateOfPay!
-  rateOfPaysForDate(date: String!): RateOfPay!
-}
-
-enum Period {
-  ANNUAL
-  WEEKLY
-  DAILY
-  HOURLY
-}
-
-type QueryRoot {
-  groups: [Group!]!
-  group(identifier: GroupID!): Group!
-}
-
-type RateOfPay {
-  inForce: NaiveDate!
-  salary(step: Int!, period: Period!): Float
-}

@@ -16,13 +16,21 @@ use std::io::Write;
 )]
 pub struct Query;
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "group_schema.graphql",
+    query_path = "group_query.graphql",
+    response_derives = "Debug"
+)]
+pub struct AnniversaryQuery;
+
 #[derive(Deserialize, Debug)]
 pub struct Record {
     last_name: String,
     first_name: String,
-    group: query::GroupID, 
+    group: anniversary_query::GroupID, 
     level: i64, 
-    step: i64, 
+    anniversary_date: NaiveDate, 
     start_date: NaiveDate, 
     end_date: NaiveDate,
 }
@@ -34,6 +42,7 @@ pub struct WBColumn {
     group: String,
     level: i64,
     step: i64,
+    anniversary_date: String,
     start_date:  String,
     end_date: String,
     work_hours: f64,
@@ -82,18 +91,19 @@ async fn upload_file(mut payload: Multipart) -> Result<NamedFile, Error> {
             group_str = format!("{:?}", &r.group);
         }
 
-        let response_data = pay_query(r.group, r.level, r.step, r.start_date, r.end_date).await?;
+        let response_data = anniversary_pay_query(r.group, r.level, r.anniversary_date, r.start_date, r.end_date).await?;
 
         for period in response_data {
             
-            let (start, end, work_hours, work_days, hourly_rate, annual_rate, salary) = period;
+            let (step, start, end, work_hours, work_days, hourly_rate, annual_rate, salary) = period;
 
             data_vec.push(WBColumn {
                 last_name: r.last_name.clone(),
                 first_name:  r.first_name.clone(),
                 group: group_str.clone(),
                 level: r.level,
-                step: r.step,
+                anniversary_date: r.anniversary_date.to_string(),
+                step: step,
                 start_date:  start,
                 end_date: end,
                 work_hours: work_hours,
@@ -182,6 +192,78 @@ async fn pay_query(
         let end = period.end_date.format("%Y-%m-%d").to_string();
     
         response_vec.push((start, end, period.work_hours, period.work_days, period.hourly_rate,
+            period.annual_rate, salary));
+    
+        }
+        
+        Ok(response_vec)
+}
+
+
+async fn anniversary_pay_query(
+    identifier1: anniversary_query::GroupID, 
+    level: i64, 
+    anniversary_date: NaiveDate, 
+    start_date: NaiveDate, 
+    end_date: NaiveDate) -> Result<Vec<(i64, String, String, f64, f64, f64, f64, f64)>, Error> {
+
+    let request_body = AnniversaryQuery::build_query(anniversary_query::Variables {
+        identifier1, 
+        level, 
+        anniversary_date, 
+        start_date, 
+        end_date
+    });
+
+    // Async request
+    let res = reqwest::Client::new()
+        .post("https://gc-payscales.herokuapp.com/graphql")
+        .json(&request_body)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+    let response_body: Response<anniversary_query::ResponseData> = res;
+
+    if let Some(errors) = response_body.errors {
+        println!("there are errors:");
+
+        for error in &errors {
+            println!("{:?}", error);
+        }
+    }
+
+    let response_data: anniversary_query::ResponseData = response_body.data.expect("missing response data");
+
+    let pay_period = response_data.group.pay_at_level_by_anniversary_date_between_dates.expect("Missing Pay Period");
+
+    let mut response_vec = Vec::new();
+
+    for period in pay_period {
+        
+        println!("Work Days: {:#?}", period.work_days);
+        println!("Work Hours: {:#?}", period.work_hours);
+        println!("Hourly Rate: {:#?}", period.hourly_rate);
+        println!("Annual Rate: {:#?}", period.annual_rate);
+    
+        let salary_option = period.salary;
+        let salary: f64;
+    
+        if let Some(s) = salary_option {
+            salary = s;
+        } else {
+            salary = 0.0;
+        }
+    
+        println!("Salary: {:#?}", salary);
+
+        let start = period.start_date.format("%Y-%m-%d").to_string();
+        let end = period.end_date.format("%Y-%m-%d").to_string();
+    
+        response_vec.push((period.step, start, end, period.work_hours, period.work_days, period.hourly_rate,
             period.annual_rate, salary));
     
         }
