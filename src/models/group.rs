@@ -193,8 +193,9 @@ impl Group {
     /// Returns a vector of PayPeriods representing the expected pay including annual step increments for a range of work days inclusive of two YYYY-MM-DD dates.
     /// For example, start_date: "2020-05-01" and end_date: "2020-05-05" would return pay for 1 day of 7.5 hours.
     /// The function returns work days and holidays (for which public servants receive pay), but not weekends.
-    /// Also requires a level in integers and an anniversary date in YYYY-MM-DD for the group and level to compute the requested pay.
-    pub fn pay_at_level_by_anniversary_date_between_dates(&self, level: i32, start_date: NaiveDate, end_date: NaiveDate, anniversary_date: NaiveDate) -> Option<Vec<PayPeriod>> {
+    /// Also requires a level in integers and an anniversary date in YYYY-MM-DD.
+    /// If anniversary_date is after the start_date, it will be changed to be the same as the start date.
+    pub fn pay_at_level_by_anniversary_date_between_dates(&self, level: i32, start_date: NaiveDate, end_date: NaiveDate, mut anniversary_date: NaiveDate) -> Option<Vec<PayPeriod>> {
         let payscale = self.pay_scales.iter().find(|p| p.level == level);
 
         // use payscales to generate active_rates_of_pay for period
@@ -213,11 +214,13 @@ impl Group {
         // Create vec of anniversary dates
         let mut steps: Vec<(NaiveDate, NaiveDate)> = Vec::new();
 
-
-        // Need to get active pay rates for each rate of pay
-        // Call for first one
-        // Call for intermediate pay rates in date range
-        // Call for last one
+        // Ensure that anniversary date isn't after the start date
+        if anniversary_date > start_date {
+            anniversary_date = NaiveDate::from_ymd(
+                start_date.year(),
+                start_date.month(),
+                start_date.day());
+        }
 
         // add years as NaiveDate to Vec from anniversary date to max anniversary 
         // Note that we are adding more steps than required so we can keep a loop going
